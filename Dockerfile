@@ -1,9 +1,9 @@
 FROM alpine
 
-ENV GRAV_VERSION="1.3.2"
+ENV GRAV_VERSION="1.3.4" PASSWORD=""
 
 RUN apk update && \
-    # Install build dependencies 
+    # Install build dependencies
     apk add --no-cache -u --virtual build curl zip && \
     # Install PHP Env
     apk add --no-cache nginx ca-certificates \
@@ -30,7 +30,7 @@ RUN apk update && \
     php7-dom && \
     # Download Grav
     mkdir -p /usr/html && \
-    curl -fLk -o /tmp/grav.zip  "https://github.com/getgrav/grav/releases/download/$GRAV_VERSION/grav-v$GRAV_VERSION.zip" && \
+    curl -fLk -o /tmp/grav.zip "https://github.com/getgrav/grav/releases/download/$GRAV_VERSION/grav-v$GRAV_VERSION.zip" && \
     unzip /tmp/grav.zip -d /tmp && \
     mv /tmp/grav/* /usr/html/ && \
     # Clean cache
@@ -43,7 +43,11 @@ WORKDIR /usr/html/user/themes/zresume/
     # Install Zresume
 RUN mv files/nginx.conf /etc/nginx/ && \
     mv files/php-fpm.conf /etc/php7/ && \
-    mv files/run.sh / && \
+    chmod a+x files/*.sh && \
+    mv files/run.sh /usr/bin/run && \
+    mv files/generate.sh /usr/bin/generate && \
+    # Clean files
+    chmod 755 -R /usr/html/cache/ && \
     rm -rf files && \
     # Init example data
     rm -rf /usr/html/user/config /usr/html/user/pages && \
@@ -57,6 +61,6 @@ RUN mv files/nginx.conf /etc/nginx/ && \
     sed -i "s/nginx:x:100:101:nginx:\/var\/lib\/nginx:\/sbin\/nologin/nginx:x:100:101:nginx:\/usr:\/bin\/bash/g" /etc/passwd- && \
     ln -s /sbin/php-fpm7 /sbin/php-fpm
 
-VOLUME ["/usr/html/user/pages", "/usr/html/user/config"]
+VOLUME ["/usr/html/user/pages", "/usr/html/user/config", "/usr/html/static"]
 EXPOSE 80
-CMD ["/run.sh"]
+CMD ["run"]
